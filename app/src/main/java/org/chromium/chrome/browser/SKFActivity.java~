@@ -1,0 +1,217 @@
+package org.chromium.chrome.browser;
+
+import java.io.File;
+import java.net.URLEncoder;
+import java.util.Iterator;
+import java.util.Map;
+
+import org.chromium.chrome.R;
+
+import com.SKFCrypto.SKFCrypto;
+import com.SKFCrypto.SKFException;
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.util.Base64;
+import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class SKFActivity extends Activity {
+
+  private ProgressBar progressBar;
+  private SKFCrypto skf;
+  private String random;
+  private String cert;
+  private String cn;
+  private String serial;
+  private String hash;
+  private Bundle bundle;
+
+  @SuppressLint("NewApi")
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.dialog_view);
+
+    bundle = getIntent().getExtras();
+
+    skf = new SKFCrypto();
+    if (19 <= android.os.Build.VERSION.SDK_INT) {
+      final File[] appsDir = getExternalFilesDirs("/");
+    }
+
+    init();
+  }
+
+  private void init() {
+    TextView okButton = (TextView) findViewById(R.id.custom_dialog_ok_btn);
+    TextView cancleButton = (TextView) findViewById(R.id.custom_dialog_cancle_btn);
+    final EditText passwdEt = (EditText) findViewById(R.id.custom_dialog_passwd_et);
+    final TextView errorMsgTv = (TextView) findViewById(R.id.custom_dialog_error_msg_tv);
+    passwdEt.addTextChangedListener(new TextWatcher() {
+
+      @Override
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        // TODO Auto-generated method stub
+
+      }
+
+      @Override
+      public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+        errorMsgTv.setVisibility(View.GONE);
+      }
+
+      @Override
+      public void afterTextChanged(Editable s) {
+        // TODO Auto-generated method stub
+
+      }
+    });
+    okButton.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        String passwd = passwdEt.getText().toString();
+
+        try {
+          /**
+           * 连接sd卡
+           */
+          if (19 <= android.os.Build.VERSION.SDK_INT) {
+            String sdPath = android.os.Environment.getExternalStorageDirectory().getPath();
+            if (android.os.Environment.isExternalStorageEmulated()) {
+              Map<String, String> map = System.getenv();
+              Iterator it = map.entrySet().iterator();
+              while (it.hasNext()) {
+                Map.Entry entry = (Map.Entry) it.next();
+                Object key = entry.getKey();
+                Object value = entry.getValue();
+                if (key.toString().equals("SECONDARY_STORAGE")) {
+                  sdPath = value.toString();
+                }
+              }
+              String packageArr[] = { sdPath, "/Android/data/" + SKFActivity.this.getPackageName() };
+              File fl = new File(packageArr[0]);
+              if (fl.isDirectory()) {
+                fl = new File(packageArr[0] + packageArr[1]);
+                if (!fl.isDirectory()) {
+                  Context self = getWindow().getContext();
+                  self.getExternalFilesDir("");
+                }
+              }
+              skf.connectDev(1, sdPath, SKFActivity.this.getPackageName());
+            }
+          } else {
+            skf.connectDev(0, "", SKFActivity.this.getPackageName());
+          }
+          Toast.makeText(SKFActivity.this, "连接SD设备成功", Toast.LENGTH_SHORT).show();
+
+          /**
+           * 验证PIN码
+           */
+          skf.verifyPIN(passwd);
+          Toast.makeText(SKFActivity.this, "验证PIN成功！", Toast.LENGTH_SHORT).show();
+
+          /**
+           * 获取签名证书
+           */
+          byte[] certSign = skf.exportCert(true);
+          cert = Base64.encodeToString(certSign, Base64.DEFAULT);
+
+          /**
+           * 获取证书序列号
+           */
+          serial = skf.getCertInfo(certSign, certSign.length, SKFCrypto.SKFCRYPTO_CERT_SERIALNUMBER);
+
+          /**
+           * 获取证书主题CN
+           */
+          cn = skf.getCertInfo(certSign, certSign.length, SKFCrypto.SKFCRYPTO_CERT_SUBJECT_CN);
+
+          /**
+           * 签名
+           */
+          int certType = skf.getCertType(certSign, certSign.length);
+          String unSignStr = random + cn + serial;
+          byte[] data = unSignStr.getBytes();
+          byte[] signData;
+          if (certType == SKFCrypto.SKFCRYPTO_CERT_TYPE_SM2) {
+            signData = skf.sm2Sign(data, data.length);
+          } else {
+            signData = skf.rsaSign(data, data.length);
+          }
+          hash = Base64.encodeToString(signData, Base64.DEFAULT);
+          Toast.makeText(SKFActivity.this, "证书签名完成!", Toast.LENGTH_SHORT).show();
+
+          passwdEt.setText("");
+
+          skf.disconnectDev();
+          Toast.makeText(SKFActivity.this, "断开成功！", Toast.LENGTH_SHORT).show();
+
+          onFinish();
+        } catch (SKFException e) {
+          if (e.getReason() == 0x0A000024) {
+            errorMsgTv.setText("PIN错误，允许出错次数：" + e.getTrials());
+            errorMsgTv.setVisibility(View.VISIBLE);
+          }
+          try {
+            skf.disconnectDev();
+          } catch (SKFException e1) {
+            Toast.makeText(SKFActivity.this, e1.getMessage(), Toast.LENGTH_SHORT).show();
+          }
+        }
+      }
+    });
+    cancleButton.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        try {
+          skf.disconnectDev();
+          Toast.makeText(SKFActivity.this, "断开成功！", Toast.LENGTH_SHORT).show();
+        } catch (SKFException e1) {
+        }
+        errorMsgTv.setVisibility(View.GONE);
+        passwdEt.setText("");
+        Intent intent = new Intent();
+        intent.putExtras(bundle);
+        SKFActivity.this.setResult(RESULT_CANCELED, intent);
+        SKFActivity.this.finish();
+      }
+    });
+  }
+
+  @SuppressWarnings("deprecation")
+  private void onFinish() {
+    try {
+      bundle.putString("cert", cert);
+      bundle.putString("cn", cn);
+      bundle.putString("serial", serial);
+      bundle.putString("hash", hash);
+      SharedPreferences preferences = getSharedPreferences("SKFCrypto", Context.MODE_PRIVATE);
+      SharedPreferences.Editor editor = preferences.edit();
+      editor.putString("cert", cert);
+      editor.putString("cn", cn);
+      editor.putString("serial", serial);
+      editor.putString("hash", hash);
+      editor.commit();
+    } catch (Exception e) {
+      Toast.makeText(SKFActivity.this, "数据未接收完成！", Toast.LENGTH_SHORT).show();
+    }
+    Intent intent = new Intent();
+    intent.putExtras(bundle);
+    SKFActivity.this.setResult(RESULT_OK, intent);
+    SKFActivity.this.finish();
+  }
+
+}

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/ChromiumForAndorid2.iml" filepath="$PROJECT_DIR$/ChromiumForAndorid2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/androidmedia_res/androidmedia_res.iml" filepath="$PROJECT_DIR$/androidmedia_res/androidmedia_res.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/chrome_res/chrome_res.iml" filepath="$PROJECT_DIR$/chrome_res/chrome_res.iml" />
+      <module fileurl="file://$PROJECT_DIR$/content_res/content_res.iml" filepath="$PROJECT_DIR$/content_res/content_res.iml" />
+      <module fileurl="file://$PROJECT_DIR$/datausagechart_res/datausagechart_res.iml" filepath="$PROJECT_DIR$/datausagechart_res/datausagechart_res.iml" />
+      <module fileurl="file://$PROJECT_DIR$/ui_res/ui_res.iml" filepath="$PROJECT_DIR$/ui_res/ui_res.iml" />
+    </modules>
+  </component>
+</project>

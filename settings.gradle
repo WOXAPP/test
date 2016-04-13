@@ -1,0 +1,1 @@
+include ':app', ':androidmedia_res', ':chrome_res', ':content_res', ':datausagechart_res', ':ui_res'
