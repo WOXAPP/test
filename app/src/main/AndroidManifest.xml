@@ -11,7 +11,7 @@ by a child template that "extends" this file.
 -->
 
 <manifest
-    package="com.fumujidi.chromiumforandorid2"
+    package="com.fumujidi.chromiumforandroid"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="MissingVersion">

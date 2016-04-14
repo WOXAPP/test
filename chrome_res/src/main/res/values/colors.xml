@@ -165,5 +165,6 @@
     <color name="nearby_urls_url_color">#099f39</color>
     <color name="nearby_urls_description_color">#545454</color>
     <color name="nearby_urls_background_color">#fff</color>
+    <color name="bottom_bar_btn_selected_color">#dadada</color>
 
 </resources>
