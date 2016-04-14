@@ -16,6 +16,8 @@ import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.ThreadUtils;
@@ -149,13 +151,14 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Creates a ToolbarManager object.
+     *
      * @param controlContainer The container of the toolbar.
-     * @param menuHandler The handler for interacting with the menu.
+     * @param menuHandler      The handler for interacting with the menu.
      */
     public ToolbarManager(final ChromeActivity activity,
-            ToolbarControlContainer controlContainer, final AppMenuHandler menuHandler,
-            ChromeAppMenuPropertiesDelegate appMenuPropertiesDelegate,
-            Invalidator invalidator) {
+                          ToolbarControlContainer controlContainer, final AppMenuHandler menuHandler,
+                          ChromeAppMenuPropertiesDelegate appMenuPropertiesDelegate,
+                          Invalidator invalidator) {
         mActionBarDelegate = new ActionModeController.ActionBarDelegate() {
             @Override
             public void setControlTopMargin(int margin) {
@@ -259,6 +262,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
             public void didSelectTab(Tab tab, TabSelectionType type, int lastId) {
                 mPreselectedTabId = Tab.INVALID_TAB_ID;
                 refreshSelectedTab();
+                updateBackPreBtnStatus(activity, tab);
             }
 
             @Override
@@ -301,11 +305,12 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
             @Override
             public void onDidNavigateMainFrame(Tab tab, String url, String baseUrl,
-                    boolean isNavigationToDifferentPage, boolean isFragmentNavigation,
-                    int statusCode) {
+                                               boolean isNavigationToDifferentPage, boolean isFragmentNavigation,
+                                               int statusCode) {
                 if (isNavigationToDifferentPage) {
                     mToolbar.onNavigatedToDifferentPage();
                 }
+                updateBackPreBtnStatus(activity, tab);
             }
 
             @Override
@@ -410,7 +415,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
             @Override
             public void onDidFailLoad(Tab tab, boolean isProvisionalLoad, boolean isMainFrame,
-                    int errorCode, String description, String failingUrl) {
+                                      int errorCode, String description, String failingUrl) {
                 NewTabPage ntp = mToolbarModel.getNewTabPageForCurrentTab();
                 if (ntp == null) return;
                 if (isProvisionalLoad && isMainFrame) {
@@ -499,7 +504,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Initialize the manager with the components that had native initialization dependencies.
-     * <p>
+     * <p/>
      * Calling this must occur after the native library have completely loaded.
      *
      * @param tabModelSelector     The selector that handles tab management.
@@ -509,14 +514,14 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
      * @param layoutDriver         A {@link LayoutManager} instance used to watch for scene changes.
      */
     public void initializeWithNative(TabModelSelector tabModelSelector,
-            ChromeFullscreenManager fullscreenManager,
-            final FindToolbarManager findToolbarManager,
-            final OverviewModeBehavior overviewModeBehavior,
-            final LayoutManager layoutDriver,
-            OnClickListener tabSwitcherClickHandler,
-            OnClickListener newTabClickHandler,
-            OnClickListener bookmarkClickHandler,
-            OnClickListener customTabsBackClickHandler) {
+                                     ChromeFullscreenManager fullscreenManager,
+                                     final FindToolbarManager findToolbarManager,
+                                     final OverviewModeBehavior overviewModeBehavior,
+                                     final LayoutManager layoutDriver,
+                                     OnClickListener tabSwitcherClickHandler,
+                                     OnClickListener newTabClickHandler,
+                                     OnClickListener bookmarkClickHandler,
+                                     OnClickListener customTabsBackClickHandler) {
         assert !mInitializedWithNative;
         mTabModelSelector = tabModelSelector;
 
@@ -621,12 +626,13 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
     /**
      * Sets/adds a custom action button to the {@link Toolbar} if it is supported. If there is
      * already an action button, update the button instead.
-     * @param drawable The {@link Drawable} to use as the background for the button.
+     *
+     * @param drawable    The {@link Drawable} to use as the background for the button.
      * @param description The content description for the custom action button.
-     * @param listener The {@link OnClickListener} to use for clicks to the button.
+     * @param listener    The {@link OnClickListener} to use for clicks to the button.
      */
     public void setCustomActionButton(Drawable drawable, String description,
-            OnClickListener listener) {
+                                      OnClickListener listener) {
         mToolbar.setCustomActionButton(drawable, description, listener);
     }
 
@@ -647,6 +653,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Called when the accessibility enabled state changes.
+     *
      * @param enabled Whether accessibility is enabled.
      */
     public void onAccessibilityStatusChanged(boolean enabled) {
@@ -711,6 +718,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Sets the handler for any special case handling related with the menu button.
+     *
      * @param menuHandler The handler to be used.
      */
     private void setMenuHandler(AppMenuHandler menuHandler) {
@@ -740,6 +748,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Set the delegate that will handle updates from toolbar driven state changes.
+     *
      * @param menuDelegatePhone The menu delegate to be updated (only applicable to phones).
      */
     public void setMenuDelegatePhone(MenuDelegatePhone menuDelegatePhone) {
@@ -796,6 +805,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Triggered when the URL input field has gained or lost focus.
+     *
      * @param hasFocus Whether the URL field has gained focus.
      */
     @Override
@@ -816,6 +826,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Update the primary color used by the model to the given color.
+     *
      * @param color The primary color for the current tab.
      */
     public void updatePrimaryColor(int color) {
@@ -824,7 +835,8 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Update the primary color used by the model to the given color.
-     * @param color The primary color for the current tab.
+     *
+     * @param color         The primary color for the current tab.
      * @param shouldAnimate Whether the change of color should be animated.
      */
     private void updatePrimaryColor(int color, boolean shouldAnimate) {
@@ -844,6 +856,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Sets whether a title should be shown within the Toolbar.
+     *
      * @param showTitle Whether a title should be shown.
      */
     public void setShowTitle(boolean showTitle) {
@@ -852,6 +865,7 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Focuses or unfocuses the URL bar.
+     *
      * @param focused Whether URL bar should be focused.
      */
     public void setUrlBarFocus(boolean focused) {
@@ -869,11 +883,12 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
 
     /**
      * Handle all necessary tasks that can be delayed until initialization completes.
+     *
      * @param activityCreationTimeMs The time of creation for the activity this toolbar belongs to.
-     * @param activityName Simple class name for the activity this toolbar belongs to.
+     * @param activityName           Simple class name for the activity this toolbar belongs to.
      */
     public void onDeferredStartup(final long activityCreationTimeMs,
-            final String activityName) {
+                                  final String activityName) {
         // Record startup performance statistics
         long elapsedTime = SystemClock.elapsedRealtime() - activityCreationTimeMs;
         if (elapsedTime < RECORD_UMA_PERFORMANCE_METRICS_DELAY_MS) {
@@ -972,9 +987,9 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
             }
             int defaultPrimaryColor = isIncognito
                     ? ApiCompatibilityUtils.getColor(mToolbar.getResources(),
-                            R.color.incognito_primary_color)
+                    R.color.incognito_primary_color)
                     : ApiCompatibilityUtils.getColor(mToolbar.getResources(),
-                            R.color.default_primary_color);
+                    R.color.default_primary_color);
             int primaryColor = tab != null ? tab.getThemeColor() : defaultPrimaryColor;
             updatePrimaryColor(primaryColor, false);
 
@@ -1041,6 +1056,27 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
     private void finishLoadProgress(boolean delayed) {
         mLoadProgressSimulator.cancel();
         mToolbar.finishLoadProgress(delayed);
+    }
+
+    private void updateBackPreBtnStatus(ChromeActivity activity, Tab tab) {
+        LinearLayout bottomBarLayout = (LinearLayout) activity.findViewById(R.id.bottom_bar_layout);
+        ImageView leftBtn = (ImageView) bottomBarLayout.getChildAt(0);
+        ImageView rightBtn = (ImageView) bottomBarLayout.getChildAt(1);
+        if (tab.canGoBack()) {
+            leftBtn.setClickable(true);
+            leftBtn.setImageResource(R.drawable.btn_m_left);
+        } else {
+            leftBtn.setClickable(false);
+            leftBtn.setImageResource(R.drawable.btn_m_left_disable);
+        }
+
+        if (tab.canGoForward()) {
+            rightBtn.setClickable(true);
+            rightBtn.setImageResource(R.drawable.btn_m_right);
+        } else {
+            rightBtn.setClickable(false);
+            rightBtn.setImageResource(R.drawable.btn_m_right_disable);
+        }
     }
 
     private static class LoadProgressSimulator {
