@@ -250,6 +250,7 @@ public class DocumentModeManager {
             } else {
                 optOutState = OPT_IN_TO_DOCUMENT_MODE;
             }
+            optOutState = OPTED_OUT_OF_DOCUMENT_MODE;
             setOptedOutState(optOutState);
         }
         return optOutState;
