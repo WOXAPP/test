@@ -13,9 +13,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -29,6 +31,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -40,8 +43,12 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.PopupWindow;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.BaseSwitches;
@@ -122,6 +129,7 @@ import org.chromium.chrome.browser.util.ColorUtils;
 import org.chromium.chrome.browser.util.FeatureUtilities;
 import org.chromium.chrome.browser.webapps.AddToHomescreenDialog;
 import org.chromium.chrome.browser.widget.ControlContainer;
+import org.chromium.components.dom_distiller.core.Theme;
 import org.chromium.content.browser.ContentReadbackHandler;
 import org.chromium.content.browser.ContentReadbackHandler.GetBitmapCallback;
 import org.chromium.content.browser.ContentVideoView;
@@ -249,18 +257,38 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
     private final static int TAG_RIGHT = 1;
     private final static int TAG_MENU = 2;
     private final static int TAG_HOME = 3;
-    private final static int TAG_TAB = 4;
-    private int[] bottomBtnTag = {TAG_LEFT, TAG_RIGHT, TAG_MENU, TAG_HOME, TAG_TAB};
+    private int[] bottomBtnTag = {TAG_LEFT, TAG_RIGHT, TAG_MENU, TAG_HOME};
+
+    private final static int TAG_SETTING = 5;
+    private final static int TAG_BOOKMARK = 6;
+    private final static int TAG_HISTORY = 7;
+    private final static int TAG_LOGOUT = 8;
+    private int[] menuBtnTag = {TAG_SETTING, TAG_BOOKMARK, TAG_HISTORY, TAG_LOGOUT};
 
     private int[] bottomBarBtnImg = {
             R.drawable.btn_m_left,
             R.drawable.btn_m_right,
             R.drawable.btn_m_menu,
-            R.drawable.btn_m_home,
-            R.drawable.btn_m_tab
+            R.drawable.btn_m_home
     };
 
     private LinearLayout bottomBarLayout;
+
+    private int[] menuBtnImg = {
+            R.drawable.btn_m_setting,
+            R.drawable.btn_m_bookmark,
+            R.drawable.btn_m_history,
+            R.drawable.btn_m_logout
+    };
+
+    private String[] menuBtnName = {
+            "设置",
+            "书签",
+            "历史",
+            "退出"
+    };
+
+    private PopupWindow popupWindow;
 
     @Override
     public void preInflationStartup() {
@@ -319,8 +347,9 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
 
         // Inform the WindowAndroid of the keyboard accessory view.
         mWindowAndroid.setKeyboardAccessoryView((ViewGroup) findViewById(R.id.keyboard_accessory));
-        initializeToolbar();
+        initMenuLayout();
         initBottomBar();
+        initializeToolbar();
     }
 
     @Override
@@ -371,6 +400,42 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
         mCompositorViewHolder.setRootView(getWindow().getDecorView().getRootView());
     }
 
+    /**
+     * 初始化菜单布局
+     */
+    private void initMenuLayout() {
+        LinearLayout linearLayout = new LinearLayout(ChromeActivity.this);
+        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup
+                .LayoutParams.WRAP_CONTENT));
+        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+        linearLayout.setBackgroundColor(Color.parseColor("#f1f1f1"));
+        for (int i = 0; i < menuBtnImg.length; i++) {
+            TextView textView = new TextView(ChromeActivity.this);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup
+                    .LayoutParams.WRAP_CONTENT, 1.0f));
+            textView.setTextColor(Color.parseColor("#7d7d7d"));
+            textView.setBackgroundResource(R.drawable.bottom_bar_btn_style);
+            textView.setGravity(Gravity.CENTER);
+            textView.setPadding(0, 20, 0, 20);
+            textView.setText(menuBtnName[i]);
+            textView.setCompoundDrawablePadding(12);
+            Drawable drawable = getResources().getDrawable(menuBtnImg[i]);
+            textView.setCompoundDrawablesWithIntrinsicBounds(null, drawable, null, null);
+            textView.setTag(menuBtnTag[i]);
+            textView.setOnClickListener(new MyOnClickListener());
+
+            linearLayout.addView(textView);
+        }
+
+        popupWindow = new PopupWindow(linearLayout);
+        popupWindow.setWidth(ViewGroup.LayoutParams.MATCH_PARENT);
+        popupWindow.setHeight(ViewGroup.LayoutParams.WRAP_CONTENT);
+        popupWindow.update();
+        popupWindow.setFocusable(true);
+        popupWindow.setBackgroundDrawable(new BitmapDrawable());
+        popupWindow.setOutsideTouchable(true);
+    }
+
     private void initBottomBar() {
         bottomBarLayout = (LinearLayout) findViewById(R.id.bottom_bar_layout);
         for (int i = 0; i < bottomBarBtnImg.length; i++) {
@@ -386,6 +451,14 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
             bottomBarLayout.addView(imageView);
         }
 
+        BottomTabBtn bottomTabBtn = new BottomTabBtn(ChromeActivity.this);
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT, 1.0f);
+        layoutParams.gravity = Gravity.CENTER;
+        bottomTabBtn.setLayoutParams(layoutParams);
+        bottomTabBtn.setPadding(0, 20, 0, 20);
+        bottomTabBtn.setBackgroundResource(R.drawable.bottom_bar_btn_style);
+        bottomBarLayout.addView(bottomTabBtn);
     }
 
     private class MyOnClickListener implements View.OnClickListener {
@@ -405,6 +478,11 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
                     onMenuOrKeyboardAction(R.id.forward_menu_id, false);
                     break;
                 case TAG_MENU:
+                    int[] location = new int[2];
+                    v.getLocationOnScreen(location);
+                    popupWindow.getContentView().measure(0, 0);
+                    int height = popupWindow.getContentView().getMeasuredHeight();
+                    popupWindow.showAtLocation(v, Gravity.NO_GRAVITY, 0, location[1] - height);
                     break;
                 case TAG_HOME:
                     Tab currentTab = getActivityTab();
@@ -416,9 +494,29 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
                         }
                     }
                     break;
-                case TAG_TAB:
+                case TAG_SETTING:
+                    onMenuOrKeyboardAction(R.id.preferences_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
+                case TAG_BOOKMARK:
+                    onMenuOrKeyboardAction(R.id.all_bookmarks_menu_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
+                case TAG_HISTORY:
+                    onMenuOrKeyboardAction(R.id.open_history_menu_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
+                case TAG_LOGOUT:
+                    System.exit(0);
+                    updatePopupWindowDisplayStatus();
                     break;
             }
+        }
+    }
+
+    private void updatePopupWindowDisplayStatus() {
+        if (popupWindow.isShowing()) {
+            popupWindow.dismiss();
         }
     }
 

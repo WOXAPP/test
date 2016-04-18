@@ -36,16 +36,16 @@ import org.chromium.ui.base.WindowAndroid;
  */
 public class AccountChooserDialog
         extends DialogFragment implements DialogInterface.OnClickListener {
-    private final Context mContext;
-    private final Credential[] mCredentials;
-    private final ImageView[] mAvatarViews;
+    private  Context mContext;
+    private  Credential[] mCredentials;
+    private  ImageView[] mAvatarViews;
 
     /**
      * Title of the dialog, contains Smart Lock branding for the Smart Lock users.
      */
-    private final String mTitle;
-    private final int mTitleLinkStart;
-    private final int mTitleLinkEnd;
+    private  String mTitle;
+    private  int mTitleLinkStart;
+    private  int mTitleLinkEnd;
     private ArrayAdapter<Credential> mAdapter;
 
     /**
@@ -54,6 +54,9 @@ public class AccountChooserDialog
     private Credential mCredential;
     private long mNativeAccountChooserDialog;
     private AlertDialog mDialog;
+
+    public AccountChooserDialog() {
+    }
 
     private AccountChooserDialog(Context context, long nativeAccountChooserDialog,
             Credential[] credentials, String title, int titleLinkStart, int titleLinkEnd) {

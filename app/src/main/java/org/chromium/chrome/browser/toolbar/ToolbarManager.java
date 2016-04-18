@@ -25,6 +25,7 @@ import org.chromium.base.metrics.RecordHistogram;
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.chrome.R;
 import org.chromium.chrome.browser.BookmarksBridge;
+import org.chromium.chrome.browser.BottomTabBtn;
 import org.chromium.chrome.browser.ChromeActivity;
 import org.chromium.chrome.browser.ChromeBrowserProviderClient;
 import org.chromium.chrome.browser.TabLoadStatus;
@@ -148,6 +149,8 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
     private HomepageStateListener mHomepageStateListener;
 
     private boolean mInitializedWithNative;
+
+    private BottomTabBtn bottomTabBtn;
 
     /**
      * Creates a ToolbarManager object.
@@ -500,6 +503,9 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
         };
 
         mLoadProgressSimulator = new LoadProgressSimulator(mToolbar);
+
+        LinearLayout linearLayout = (LinearLayout) activity.findViewById(R.id.bottom_bar_layout);
+        bottomTabBtn = (BottomTabBtn) linearLayout.getChildAt(linearLayout.getChildCount() - 1);
     }
 
     /**
@@ -923,7 +929,9 @@ public class ToolbarManager implements ToolbarTabController, UrlFocusChangeListe
      */
     private void updateTabCount() {
         if (!mTabRestoreCompleted) return;
-        mToolbar.updateTabCountVisuals(mTabModelSelector.getCurrentModel().getCount());
+        int tabCount = mTabModelSelector.getCurrentModel().getCount();
+        mToolbar.updateTabCountVisuals(tabCount);
+        bottomTabBtn.setTabCountTv(String.valueOf(tabCount));
     }
 
     /**

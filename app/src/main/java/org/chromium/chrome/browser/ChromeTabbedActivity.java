@@ -21,6 +21,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.CommandLine;
@@ -380,7 +381,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
     private static class StackLayoutFactory implements OverviewLayoutFactoryDelegate {
         @Override
         public Layout createOverviewLayout(Context context, LayoutUpdateHost updateHost,
-                LayoutRenderHost renderHost, EventFilter eventFilter) {
+                                           LayoutRenderHost renderHost, EventFilter eventFilter) {
             return new StackLayout(context, updateHost, renderHost, eventFilter);
         }
     }
@@ -444,6 +445,10 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
                     toggleOverview();
                 }
             };
+
+            LinearLayout linearLayout = (LinearLayout) findViewById(R.id.bottom_bar_layout);
+            linearLayout.getChildAt(linearLayout.getChildCount() - 1).setOnClickListener(tabSwitcherClickHandler);
+
             OnClickListener newTabClickHandler = new OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -623,8 +628,8 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
          */
         @Override
         public void processUrlViewIntent(String url, String referer, String headers,
-                TabOpenType tabOpenType, String externalAppId, int tabIdToBringToFront,
-                boolean hasUserGesture, Intent intent) {
+                                         TabOpenType tabOpenType, String externalAppId, int tabIdToBringToFront,
+                                         boolean hasUserGesture, Intent intent) {
             TabModel tabModel = getCurrentTabModel();
             switch (tabOpenType) {
                 case REUSE_URL_MATCHING_TAB_ELSE_NEW_TAB:
@@ -754,7 +759,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
         if (commandLine.hasSwitch(ContentSwitches.ENABLE_TEST_INTENTS)
                 && getIntent() != null
                 && getIntent().hasExtra(
-                        ChromeTabbedActivity.INTENT_EXTRA_TEST_RENDER_PROCESS_LIMIT)) {
+                ChromeTabbedActivity.INTENT_EXTRA_TEST_RENDER_PROCESS_LIMIT)) {
             int value = getIntent().getIntExtra(
                     ChromeTabbedActivity.INTENT_EXTRA_TEST_RENDER_PROCESS_LIMIT, -1);
             if (value != -1) {
@@ -798,7 +803,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
         // Don't show the keyboard until user clicks in.
         getWindow().setSoftInputMode(
                 WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
-                | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+                        | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
 
         mContentContainer = (ViewGroup) findViewById(android.R.id.content);
         mControlContainer = (ToolbarControlContainer) findViewById(R.id.control_container);
@@ -1081,7 +1086,7 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
      * @param intent        The original intent.
      */
     private void launchIntent(String url, String referer, String headers,
-            String externalAppId, boolean forceNewTab, Intent intent) {
+                              String externalAppId, boolean forceNewTab, Intent intent) {
         if (mUIInitialized) {
             mLayoutManager.hideOverview(false);
             getToolbarManager().finishAnimations();
@@ -1278,7 +1283,8 @@ public class ChromeTabbedActivity extends ChromeActivity implements OverviewMode
     }
 
     @Override
-    public void onOverviewModeFinishedShowing() {}
+    public void onOverviewModeFinishedShowing() {
+    }
 
     @Override
     public void onOverviewModeStartedHiding(boolean showToolbar, boolean delayAnimation) {
