@@ -37,6 +37,7 @@ import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.chromium.base.ApiCompatibilityUtils;
@@ -44,6 +45,7 @@ import org.chromium.base.SysUtils;
 import org.chromium.base.VisibleForTesting;
 import org.chromium.base.metrics.RecordUserAction;
 import org.chromium.chrome.R;
+import org.chromium.chrome.browser.BottomTabBtn;
 import org.chromium.chrome.browser.compositor.Invalidator;
 import org.chromium.chrome.browser.ntp.NewTabPage;
 import org.chromium.chrome.browser.omnibox.LocationBar;
@@ -69,7 +71,7 @@ import java.util.Set;
  */
 public class ToolbarPhone extends ToolbarLayout
         implements Invalidator.Client, OnClickListener, OnLongClickListener,
-                NewTabPage.OnSearchBoxScrollListener {
+        NewTabPage.OnSearchBoxScrollListener {
 
     public static final int URL_FOCUS_CHANGE_ANIMATION_DURATION_MS = 250;
     private static final int URL_FOCUS_TOOLBAR_BUTTONS_TRANSLATION_X_DP = 10;
@@ -143,11 +145,15 @@ public class ToolbarPhone extends ToolbarLayout
     @ViewDebug.ExportedProperty(category = "chrome")
     private boolean mUrlFocusChangeInProgress;
 
-    /** 1.0 is 100% focused, 0 is completely unfocused */
+    /**
+     * 1.0 is 100% focused, 0 is completely unfocused
+     */
     @ViewDebug.ExportedProperty(category = "chrome")
     private float mUrlFocusChangePercent;
 
-    /** 1.0 is 100% expanded to full width, 0 is original collapsed size. */
+    /**
+     * 1.0 is 100% expanded to full width, 0 is original collapsed size.
+     */
     @ViewDebug.ExportedProperty(category = "chrome")
     private float mUrlExpansionPercent;
     private AnimatorSet mUrlFocusLayoutAnimator;
@@ -207,35 +213,36 @@ public class ToolbarPhone extends ToolbarLayout
 
     private final Property<ToolbarPhone, Float> mUrlFocusChangePercentProperty =
             new Property<ToolbarPhone, Float>(Float.class, "") {
-        @Override
-        public Float get(ToolbarPhone object) {
-            return object.mUrlFocusChangePercent;
-        }
+                @Override
+                public Float get(ToolbarPhone object) {
+                    return object.mUrlFocusChangePercent;
+                }
 
-        @Override
-        public void set(ToolbarPhone object, Float value) {
-            setUrlFocusChangePercent(value);
-        }
-    };
+                @Override
+                public void set(ToolbarPhone object, Float value) {
+                    setUrlFocusChangePercent(value);
+                }
+            };
 
     private final Property<ToolbarPhone, Float> mTabSwitcherModePercentProperty =
             new Property<ToolbarPhone, Float>(Float.class, "") {
-        @Override
-        public Float get(ToolbarPhone object) {
-            return object.mTabSwitcherModePercent;
-        }
+                @Override
+                public Float get(ToolbarPhone object) {
+                    return object.mTabSwitcherModePercent;
+                }
 
-        @Override
-        public void set(ToolbarPhone object, Float value) {
-            object.mTabSwitcherModePercent = value;
-            triggerPaintInvalidate(ToolbarPhone.this);
-        }
-    };
+                @Override
+                public void set(ToolbarPhone object, Float value) {
+                    object.mTabSwitcherModePercent = value;
+                    triggerPaintInvalidate(ToolbarPhone.this);
+                }
+            };
 
     /**
      * Constructs a ToolbarPhone object.
+     *
      * @param context The Context in which this View object is created.
-     * @param attrs The AttributeSet that was specified with this View.
+     * @param attrs   The AttributeSet that was specified with this View.
      */
     public ToolbarPhone(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -588,7 +595,7 @@ public class ToolbarPhone extends ToolbarLayout
         switch (visualState) {
             case NEW_TAB_NORMAL:
                 return Color.TRANSPARENT;
-            case NORMAL :
+            case NORMAL:
                 return ApiCompatibilityUtils.getColor(res, R.color.default_primary_color);
             case INCOGNITO:
                 return ApiCompatibilityUtils.getColor(res, R.color.incognito_primary_color);
@@ -660,7 +667,7 @@ public class ToolbarPhone extends ToolbarLayout
      * Calculate the bounds for UrlViewport and set them to out rect.
      */
     private void updateUrlViewportBounds(Rect out, VisualState visualState,
-            boolean ignoreTranslationY) {
+                                         boolean ignoreTranslationY) {
         // Calculate the visible boundaries of the left and right most child views
         // of the location bar.
         int leftViewPosition = getViewBoundsLeftOfLocationBar(visualState);
@@ -689,7 +696,7 @@ public class ToolbarPhone extends ToolbarLayout
                 rightViewPosition,
                 (int) (mPhoneLocationBar.getMeasuredHeight()
                         + (getHeight() - mPhoneLocationBar.getMeasuredHeight()
-                                + mUrlBackgroundPadding.bottom + mUrlBackgroundPadding.top)
+                        + mUrlBackgroundPadding.bottom + mUrlBackgroundPadding.top)
                         * mUrlExpansionPercent));
         float yOffset = ignoreTranslationY ? mPhoneLocationBar.getTop() : mPhoneLocationBar.getY();
 
@@ -698,6 +705,7 @@ public class ToolbarPhone extends ToolbarLayout
 
     /**
      * Updates percentage of current the URL focus change animation.
+     *
      * @param percent 1.0 is 100% focused, 0 is completely unfocused.
      */
     private void setUrlFocusChangePercent(float percent) {
@@ -789,9 +797,9 @@ public class ToolbarPhone extends ToolbarLayout
         mForceDrawLocationBarBackground = false;
         mUrlBackgroundAlpha = isIncognito()
                 || (mUnfocusedLocationBarUsesTransparentBg
-                        && !mUrlFocusChangeInProgress
-                        && !mPhoneLocationBar.hasFocus())
-                        ? LOCATION_BAR_TRANSPARENT_BACKGROUND_ALPHA : 255;
+                && !mUrlFocusChangeInProgress
+                && !mPhoneLocationBar.hasFocus())
+                ? LOCATION_BAR_TRANSPARENT_BACKGROUND_ALPHA : 255;
         setAncestorsShouldClipChildren(true);
         mNtpSearchBoxScrollPercent = UNINITIALIZED_PERCENT;
     }
@@ -818,7 +826,7 @@ public class ToolbarPhone extends ToolbarLayout
         ntp.getSearchBoxBounds(mNtpSearchBoxOriginalBounds, mNtpSearchBoxTransformedBounds);
         float halfHeightDifference = (mNtpSearchBoxTransformedBounds.height()
                 - (mPhoneLocationBar.getMeasuredHeight() - paddingTop - paddingBottom
-                        + mLocationBarInsets)) / 2f;
+                + mLocationBarInsets)) / 2f;
         mPhoneLocationBar.setTranslationY(growthPercent == 0f ? 0 : Math.max(0,
                 (mNtpSearchBoxTransformedBounds.top - mPhoneLocationBar.getTop()
                         + halfHeightDifference)));
@@ -963,10 +971,9 @@ public class ToolbarPhone extends ToolbarLayout
     /**
      * Translates the canvas to ensure the specified view's coordinates are at 0, 0.
      *
-     * @param from The view the canvas is currently translated to.
-     * @param to The view to translate to.
+     * @param from   The view the canvas is currently translated to.
+     * @param to     The view to translate to.
      * @param canvas The canvas to be translated.
-     *
      * @throws IllegalArgumentException if {@code from} is not an ancestor of {@code to}.
      */
     private static void translateCanvasToView(View from, View to, Canvas canvas)
@@ -989,7 +996,7 @@ public class ToolbarPhone extends ToolbarLayout
 
         if (mLocationBarBackground != null
                 && ((!mInTabSwitcherMode && !mTabSwitcherModeViews.contains(child))
-                        || (mInTabSwitcherMode && mBrowsingModeViews.contains(child)))) {
+                || (mInTabSwitcherMode && mBrowsingModeViews.contains(child)))) {
             canvas.save();
             if (mUrlExpansionPercent != 0f && mUrlViewportBounds.top < child.getBottom()) {
                 // For other child views, use the inverse clipping of the URL viewport.
@@ -1282,8 +1289,8 @@ public class ToolbarPhone extends ToolbarLayout
     private boolean isTabSwitcherAnimationRunning() {
         return mUIAnimatingTabSwitcherTransition
                 || (mTabSwitcherModeAnimation != null && mTabSwitcherModeAnimation.isRunning())
-                        || (mDelayedTabSwitcherModeAnimation != null
-                                && mDelayedTabSwitcherModeAnimation.isRunning());
+                || (mDelayedTabSwitcherModeAnimation != null
+                && mDelayedTabSwitcherModeAnimation.isRunning());
     }
 
     private void updateViewsForTabSwitcherMode(boolean isInTabSwitcherMode) {
@@ -1372,7 +1379,7 @@ public class ToolbarPhone extends ToolbarLayout
 
         if (!visualStateChanged && mVisualState == VisualState.BRAND_COLOR
                 && getToolbarDataProvider().getPrimaryColor()
-                        != mTabSwitcherAnimationBgOverlay.getColor()) {
+                != mTabSwitcherAnimationBgOverlay.getColor()) {
             visualStateChanged = true;
         }
         if (!visualStateChanged) return;
@@ -1834,7 +1841,7 @@ public class ToolbarPhone extends ToolbarLayout
                     !ColorUtils.shouldUseOpaqueTextboxBackground(currentPrimaryColor);
             if (useLightToolbarDrawables != mUseLightToolbarDrawables
                     || unfocusedLocationBarUsesTransparentBg
-                            != mUnfocusedLocationBarUsesTransparentBg) {
+                    != mUnfocusedLocationBarUsesTransparentBg) {
                 visualStateChanged = true;
             } else {
                 updateToolbarBackground(VisualState.BRAND_COLOR);
@@ -1882,8 +1889,8 @@ public class ToolbarPhone extends ToolbarLayout
         getProgressBar().setBackgroundColor(progressBarBackgroundColor);
         int progressBarForegroundColor = ApiCompatibilityUtils.getColor(getResources(),
                 mUseLightToolbarDrawables
-                ? R.color.progress_bar_foreground_white
-                : R.color.progress_bar_foreground);
+                        ? R.color.progress_bar_foreground_white
+                        : R.color.progress_bar_foreground);
         getProgressBar().setForegroundColor(progressBarForegroundColor);
 
 

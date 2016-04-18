@@ -19,8 +19,11 @@ import org.chromium.chrome.R;
  */
 public class ConfirmManagedSigninFragment extends DialogFragment {
 
-    private final String mManagementDomain;
-    private final OnClickListener mListener;
+    private  String mManagementDomain = null;
+    private  OnClickListener mListener = null;
+
+    public ConfirmManagedSigninFragment() {
+    }
 
     public ConfirmManagedSigninFragment(String managementDomain, OnClickListener listener) {
         mManagementDomain = managementDomain;
