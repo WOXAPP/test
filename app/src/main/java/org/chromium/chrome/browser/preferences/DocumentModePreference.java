@@ -47,18 +47,26 @@ public class DocumentModePreference extends PreferenceFragment {
         mDocumentModeSwitch = (SwitchPreference) findPreference(PREF_DOCUMENT_MODE_SWITCH);
 
         boolean isdocumentModeEnabled = !mDocumentModeManager.isOptedOutOfDocumentMode();
-        mDocumentModeSwitch.setChecked(isdocumentModeEnabled);
+        /**
+         * I want use only document mode, otherwise there is a bug in Android 5.0 what the tab switch button
+         * is not work.
+         */
+        mDocumentModeSwitch.setChecked(false);
+        RecordUserAction.record("DocumentActivity_UserOptIn");
+        mDocumentModeManager.setOptedOutState(DocumentModeManager.OPTED_OUT_OF_DOCUMENT_MODE);
+        mDocumentModeManager.setOptOutCleanUpPending(true);
+        DocumentMigrationHelper.migrateTabs(false, getActivity(), isRestartNeeded(false));
 
-        mDocumentModeSwitch.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(Preference preference, Object newValue) {
-                if ((boolean) newValue == !mDocumentModeManager.isOptedOutOfDocumentMode()) {
-                    return true;
-                }
-                createOptOutAlertDialog((boolean) newValue).show();
-                return true;
-            }
-        });
+//        mDocumentModeSwitch.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
+//            @Override
+//            public boolean onPreferenceChange(Preference preference, Object newValue) {
+//                if ((boolean) newValue == !mDocumentModeManager.isOptedOutOfDocumentMode()) {
+//                    return true;
+//                }
+//                createOptOutAlertDialog((boolean) newValue).show();
+//                return true;
+//            }
+//        });
     }
 
     private AlertDialog createOptOutAlertDialog(final boolean optOut) {
@@ -108,6 +116,7 @@ public class DocumentModePreference extends PreferenceFragment {
      * Figure out whether we need to restart the application after the tab migration is complete.
      * We don't need to restart if this is being accessed from FRE and no document activities have
      * been created yet.
+     *
      * @param optOut This is true when we are starting out in opted-out mode.
      * @return Whether to restart the application.
      */
@@ -116,7 +125,7 @@ public class DocumentModePreference extends PreferenceFragment {
         if (optOut) return true;
         boolean isFromFre = getActivity().getIntent() != null
                 && getActivity().getIntent().getBooleanExtra(
-                      IntentHandler.EXTRA_INVOKED_FROM_FRE, false);
+                IntentHandler.EXTRA_INVOKED_FROM_FRE, false);
         if (!isFromFre) return true;
 
         ActivityManager am = (ActivityManager) getActivity().getSystemService(
