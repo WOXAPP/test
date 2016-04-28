@@ -9,9 +9,14 @@ import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.SearchManager;
 import android.app.assist.AssistContent;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -31,6 +36,7 @@ import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -144,8 +150,11 @@ import org.chromium.ui.base.ActivityWindowAndroid;
 import org.chromium.ui.base.PageTransition;
 import org.chromium.ui.base.WindowAndroid;
 
+import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A {@link AsyncInitializationActivity} that builds and manages a {@link CompositorViewHolder}
@@ -263,7 +272,14 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
     private final static int TAG_BOOKMARK = 6;
     private final static int TAG_HISTORY = 7;
     private final static int TAG_LOGOUT = 8;
-    private int[] menuBtnTag = {TAG_SETTING, TAG_BOOKMARK, TAG_HISTORY, TAG_LOGOUT};
+    private final static int TAG_COLLECT = 9;
+    private final static int TAG_REFRESH = 10;
+    private final static int TAG_DOWNLOAD = 11;
+    private final static int TAG_SHARE = 12;
+    private final static int TAG_DESK = 13;
+    private int[] menuBtnTag = {TAG_BOOKMARK, TAG_COLLECT, TAG_HISTORY, TAG_REFRESH, TAG_SETTING, TAG_DESK,
+            TAG_SHARE,
+            TAG_LOGOUT};
 
     private int[] bottomBarBtnImg = {
             R.drawable.btn_m_left,
@@ -275,19 +291,39 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
     private LinearLayout bottomBarLayout;
 
     private int[] menuBtnImg = {
-            R.drawable.btn_m_setting,
             R.drawable.btn_m_bookmark,
+            R.drawable.btn_m_collect,
             R.drawable.btn_m_history,
+            R.drawable.btn_m_refresh,
+            R.drawable.btn_m_setting,
+            R.drawable.btn_m_mobile_to_desk,
+            R.drawable.btn_m_share,
             R.drawable.btn_m_logout
     };
 
     private String[] menuBtnName = {
-            "设置",
             "书签",
+            "收藏",
             "历史",
+            "刷新",
+            "设置",
+            "桌面版",
+            "分享",
             "退出"
     };
 
+    /**
+     * 底部弹出菜单布局
+     * Modify by: xuhualin in 2016/4/27
+     */
+    private LinearLayout linearLayout;
+    /**
+     * 收藏和已收藏
+     */
+    private Drawable collect;
+    private Drawable collectFilled;
+    private Drawable mobileToDesk;
+    private Drawable deskToMobile;
     private PopupWindow popupWindow;
 
     @Override
@@ -404,19 +440,35 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
      * 初始化菜单布局
      */
     private void initMenuLayout() {
-        LinearLayout linearLayout = new LinearLayout(ChromeActivity.this);
+        collect = getResources().getDrawable(R.drawable.btn_m_collect);
+        collectFilled = getResources().getDrawable(R.drawable.btn_m_collect_filled);
+        mobileToDesk = getResources().getDrawable(R.drawable.btn_m_mobile_to_desk);
+        deskToMobile = getResources().getDrawable(R.drawable.btn_m_desk_to_mobile);
+        linearLayout = new LinearLayout(ChromeActivity.this);
         linearLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup
                 .LayoutParams.WRAP_CONTENT));
-        linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
         linearLayout.setBackgroundColor(Color.parseColor("#f1f1f1"));
+        LinearLayout linearLayoutTemp = null;
         for (int i = 0; i < menuBtnImg.length; i++) {
+            if (i % 4 == 0) {
+                linearLayoutTemp = new LinearLayout(ChromeActivity.this);
+                linearLayoutTemp.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup
+                                .LayoutParams.WRAP_CONTENT));
+                linearLayoutTemp.setOrientation(LinearLayout.HORIZONTAL);
+                linearLayoutTemp.setBackgroundColor(Color.parseColor("#f1f1f1"));
+
+                linearLayout.addView(linearLayoutTemp);
+            }
+
             TextView textView = new TextView(ChromeActivity.this);
             textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup
                     .LayoutParams.WRAP_CONTENT, 1.0f));
             textView.setTextColor(Color.parseColor("#7d7d7d"));
             textView.setBackgroundResource(R.drawable.bottom_bar_btn_style);
             textView.setGravity(Gravity.CENTER);
-            textView.setPadding(0, 20, 0, 20);
+            textView.setPadding(0, 22, 0, 22);
             textView.setText(menuBtnName[i]);
             textView.setCompoundDrawablePadding(12);
             Drawable drawable = getResources().getDrawable(menuBtnImg[i]);
@@ -424,7 +476,7 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
             textView.setTag(menuBtnTag[i]);
             textView.setOnClickListener(new MyOnClickListener());
 
-            linearLayout.addView(textView);
+            linearLayoutTemp.addView(textView);
         }
 
         popupWindow = new PopupWindow(linearLayout);
@@ -478,6 +530,7 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
                     onMenuOrKeyboardAction(R.id.forward_menu_id, false);
                     break;
                 case TAG_MENU:
+                    prepareMenu();
                     int[] location = new int[2];
                     v.getLocationOnScreen(location);
                     popupWindow.getContentView().measure(0, 0);
@@ -510,8 +563,112 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
                     System.exit(0);
                     updatePopupWindowDisplayStatus();
                     break;
+                case TAG_REFRESH:
+                    onMenuOrKeyboardAction(R.id.reload_menu_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
+                case TAG_SHARE:
+                    onMenuOrKeyboardAction(R.id.share_menu_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
+                case TAG_COLLECT:
+                    onMenuOrKeyboardAction(R.id.bookmark_this_page_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
+                case TAG_DESK:
+                    onMenuOrKeyboardAction(R.id.request_desktop_site_id, false);
+                    updatePopupWindowDisplayStatus();
+                    break;
             }
         }
+    }
+
+    /**
+     * call every time when open the menu.
+     * Modify by: xuhualin in 2016/4/27
+     */
+    private void prepareMenu() {
+        Tab currentTab = getActivityTab();
+        String url = currentTab.getUrl();
+        boolean isChromeScheme = url.startsWith(UrlConstants.CHROME_SCHEME)
+                || url.startsWith(UrlConstants.CHROME_NATIVE_SCHEME);
+
+        TextView bookmarkThisPage = (TextView) ((LinearLayout)linearLayout.getChildAt(0)).getChildAt(1);
+        if (currentTab.getBookmarkId() != ChromeBrowserProviderClient.INVALID_BOOKMARK_ID) {
+            bookmarkThisPage.setCompoundDrawablesWithIntrinsicBounds(null, collectFilled, null, null);
+        } else {
+            bookmarkThisPage.setCompoundDrawablesWithIntrinsicBounds(null, collect, null, null);
+        }
+
+        TextView desk = (TextView)((LinearLayout)linearLayout.getChildAt(1)).getChildAt(1);
+        if(currentTab.getUseDesktopUserAgent()){
+            desk.setCompoundDrawablesWithIntrinsicBounds(null, deskToMobile, null, null);
+            desk.setText("手机版");
+        } else {
+            desk.setCompoundDrawablesWithIntrinsicBounds(null, mobileToDesk, null, null);
+            desk.setText("桌面版");
+        }
+
+
+        final ComponentName component = getLastShareComponentName(ChromeActivity.this);
+        boolean isComponentValid = false;
+        if (component != null) {
+            Intent intent = ShareHelper.getShareIntent("", "", null);
+            intent.setPackage(component.getPackageName());
+            PackageManager manager = getPackageManager();
+            List<ResolveInfo> resolveInfoList = manager.queryIntentActivities(intent, 0);
+            for (ResolveInfo info : resolveInfoList) {
+                ActivityInfo ai = info.activityInfo;
+                if (component.equals(new ComponentName(ai.applicationInfo.packageName, ai.name))) {
+                    isComponentValid = true;
+                    break;
+                }
+            }
+        }
+        if (isComponentValid) {
+            boolean retrieved = false;
+            try {
+                final PackageManager pm = getPackageManager();
+                AsyncTask<Void, Void, Pair<Drawable, CharSequence>> task =
+                        new AsyncTask<Void, Void, Pair<Drawable, CharSequence>>() {
+                            @Override
+                            protected Pair<Drawable, CharSequence> doInBackground(Void... params) {
+                                Drawable directShareIcon = null;
+                                CharSequence directShareTitle = null;
+                                try {
+                                    directShareIcon = pm.getActivityIcon(component);
+                                    ApplicationInfo ai =
+                                            pm.getApplicationInfo(component.getPackageName(), 0);
+                                    directShareTitle = pm.getApplicationLabel(ai);
+                                } catch (PackageManager.NameNotFoundException exception) {
+                                    // Use the default null values.
+                                }
+                                return new Pair<Drawable, CharSequence>(
+                                        directShareIcon, directShareTitle);
+                            }
+                        };
+                task.execute();
+                Pair<Drawable, CharSequence> result =
+                        task.get(1000, TimeUnit.MILLISECONDS);
+                retrieved = true;
+            } catch (InterruptedException ie) {
+                // Use the default null values.
+            } catch (ExecutionException ee) {
+                // Use the default null values.
+            } catch (TimeoutException te) {
+                // Use the default null values.
+            }
+            RecordHistogram.recordBooleanHistogram(
+                    "Android.IsLastSharedAppInfoRetrieved", retrieved);
+        }
+    }
+
+    private ComponentName getLastShareComponentName(Context context) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String packageName = preferences.getString("last_shared_package_name", null);
+        String className = preferences.getString("last_shared_class_name", null);
+        if (packageName == null || className == null) return null;
+        return new ComponentName(packageName, className);
     }
 
     private void updatePopupWindowDisplayStatus() {

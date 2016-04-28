@@ -73,16 +73,14 @@ public class ChromeAppMenuPropertiesDelegate implements AppMenuPropertiesDelegat
             isOverviewMenu = isOverview;
             isTabletEmptyModeMenu = false;
         }
-
+        String url = currentTab.getUrl();
+        boolean isChromeScheme = url.startsWith(UrlConstants.CHROME_SCHEME)
+                || url.startsWith(UrlConstants.CHROME_NATIVE_SCHEME);
         menu.setGroupVisible(R.id.PAGE_MENU, isPageMenu);
         menu.setGroupVisible(R.id.OVERVIEW_MODE_MENU, isOverviewMenu);
         menu.setGroupVisible(R.id.TABLET_EMPTY_MODE_MENU, isTabletEmptyModeMenu);
 
         if (isPageMenu && currentTab != null) {
-            String url = currentTab.getUrl();
-            boolean isChromeScheme = url.startsWith(UrlConstants.CHROME_SCHEME)
-                    || url.startsWith(UrlConstants.CHROME_NATIVE_SCHEME);
-
             // Update the icon row items (not shown on tablet).
             menu.findItem(R.id.icon_row_menu_id).setVisible(!mActivity.isTablet());
             if (!mActivity.isTablet()) {
@@ -241,5 +239,9 @@ public class ChromeAppMenuPropertiesDelegate implements AppMenuPropertiesDelegat
      */
     public void setBookmarksBridge(BookmarksBridge bookmarksBridge) {
         mBookmarksBridge = bookmarksBridge;
+    }
+
+    public BookmarksBridge getmBookmarksBridge() {
+        return mBookmarksBridge;
     }
 }

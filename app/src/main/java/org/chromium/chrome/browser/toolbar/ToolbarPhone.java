@@ -342,6 +342,12 @@ public class ToolbarPhone extends ToolbarLayout
             ApiCompatibilityUtils.setMarginEnd(getFrameLayoutParams(mNewTabButton),
                     mToolbarButtonsContainer.getMeasuredWidth());
         }
+
+        /**
+         * Hide the tab_switch_btn on toolbar
+         * Modify by: xuhualin in 2016/4/22
+         */
+        mToggleTabStackButton.setVisibility(View.GONE);
     }
 
     /**
@@ -1632,9 +1638,10 @@ public class ToolbarPhone extends ToolbarLayout
     protected boolean shouldShowMenuButton() {
         // Even in Document mode, the toolbar menu button will be shown while on the NTP.  This
         // allows the menu to translate off the screen on scroll to match the tabbed behavior.
-        if (mVisualState == VisualState.NEW_TAB_NORMAL) return true;
-
-        return !mPhoneLocationBar.showMenuButtonInOmnibox() && super.shouldShowMenuButton();
+//        if (mVisualState == VisualState.NEW_TAB_NORMAL) return true;
+//
+//        return !mPhoneLocationBar.showMenuButtonInOmnibox() && super.shouldShowMenuButton();
+        return super.shouldShowMenuButton();
     }
 
     @Override

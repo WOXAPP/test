@@ -17,6 +17,17 @@
             <option value="$PROJECT_DIR$/ui_res" />
           </set>
         </option>
+        <option name="myModules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/androidmedia_res" />
+            <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/chrome_res" />
+            <option value="$PROJECT_DIR$/content_res" />
+            <option value="$PROJECT_DIR$/datausagechart_res" />
+            <option value="$PROJECT_DIR$/ui_res" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>

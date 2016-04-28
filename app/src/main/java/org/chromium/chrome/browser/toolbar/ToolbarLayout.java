@@ -492,7 +492,7 @@ abstract class ToolbarLayout extends FrameLayout implements Toolbar {
     }
 
     protected boolean shouldShowMenuButton() {
-        return true;
+        return false;
     }
 
     /**
