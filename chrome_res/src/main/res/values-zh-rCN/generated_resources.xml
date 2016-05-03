@@ -12,13 +12,13 @@
 <string name="sad_tab_reload_label">"重新加载"</string>
 <string name="options_homepage_title">"主页"</string>
 <string name="autofill_card_unmask_prompt_storage_checkbox">"在此设备上保存此信用卡的副本"</string>
-<string name="autofill_card_unmask_prompt_storage_tooltip">"选中后，Chrome 会将您的信用卡副本存储在此设备上，以加快表单填写速度。"</string>
-<string name="autofill_card_unmask_prompt_storage_tooltip_ios">"如果您选中此项，Chrome 会将您的卡的副本存储在此设备上，以加快表单填写速度。"</string>
+<string name="autofill_card_unmask_prompt_storage_tooltip">"选中后，win-trust 会将您的信用卡副本存储在此设备上，以加快表单填写速度。"</string>
+<string name="autofill_card_unmask_prompt_storage_tooltip_ios">"如果您选中此项，win-trust 会将您的卡的副本存储在此设备上，以加快表单填写速度。"</string>
 <string name="autofill_card_unmask_confirm_button">"验证"</string>
 <string name="autofill_card_unmask_verification_in_progress">"正在验证信用卡"</string>
 <string name="autofill_card_unmask_verification_success">"您的信用卡已成功验证"</string>
 <string name="autofill_card_unmask_expiration_date_separator">"/"</string>
 <string name="autofill_card_unmask_new_card_link">"要使用新信用卡吗？"</string>
-<string name="autofill_from_google_account">"Google Payments"</string>
+<string name="autofill_from_google_account">"win-trust Payments"</string>
 <string name="autofill_clear_local_copy_button">"清除副本"</string>
 </resources>
