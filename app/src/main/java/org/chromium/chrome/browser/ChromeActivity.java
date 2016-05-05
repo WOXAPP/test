@@ -49,12 +49,15 @@ import android.view.WindowManager;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityManager.AccessibilityStateChangeListener;
 import android.view.accessibility.AccessibilityManager.TouchExplorationStateChangeListener;
+import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.umeng.analytics.MobclickAgent;
 
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.BaseSwitches;
@@ -560,6 +563,7 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
                     updatePopupWindowDisplayStatus();
                     break;
                 case TAG_LOGOUT:
+                    MobclickAgent.onKillProcess(ChromeActivity.this);
                     System.exit(0);
                     updatePopupWindowDisplayStatus();
                     break;
@@ -593,15 +597,15 @@ public abstract class ChromeActivity extends AsyncInitializationActivity
         boolean isChromeScheme = url.startsWith(UrlConstants.CHROME_SCHEME)
                 || url.startsWith(UrlConstants.CHROME_NATIVE_SCHEME);
 
-        TextView bookmarkThisPage = (TextView) ((LinearLayout)linearLayout.getChildAt(0)).getChildAt(1);
+        TextView bookmarkThisPage = (TextView) ((LinearLayout) linearLayout.getChildAt(0)).getChildAt(1);
         if (currentTab.getBookmarkId() != ChromeBrowserProviderClient.INVALID_BOOKMARK_ID) {
             bookmarkThisPage.setCompoundDrawablesWithIntrinsicBounds(null, collectFilled, null, null);
         } else {
             bookmarkThisPage.setCompoundDrawablesWithIntrinsicBounds(null, collect, null, null);
         }
 
-        TextView desk = (TextView)((LinearLayout)linearLayout.getChildAt(1)).getChildAt(1);
-        if(currentTab.getUseDesktopUserAgent()){
+        TextView desk = (TextView) ((LinearLayout) linearLayout.getChildAt(1)).getChildAt(1);
+        if (currentTab.getUseDesktopUserAgent()) {
             desk.setCompoundDrawablesWithIntrinsicBounds(null, deskToMobile, null, null);
             desk.setText("手机版");
         } else {

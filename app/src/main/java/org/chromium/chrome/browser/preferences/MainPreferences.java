@@ -73,7 +73,7 @@ public class MainPreferences extends PreferenceFragment implements SignInStateOb
 
         if (mShowSearchEnginePicker) {
             mShowSearchEnginePicker = false;
-            ((SearchEnginePreference) findPreference(PREF_SEARCH_ENGINE)).showDialog();
+//            ((SearchEnginePreference) findPreference(PREF_SEARCH_ENGINE)).showDialog();
         }
     }
 
@@ -81,24 +81,24 @@ public class MainPreferences extends PreferenceFragment implements SignInStateOb
     public void onPause() {
         super.onPause();
         SigninManager.get(getActivity()).removeSignInStateObserver(this);
-        unregisterSignInPref();
+//        unregisterSignInPref();
     }
 
     private void updatePreferences() {
         if (getPreferenceScreen() != null) getPreferenceScreen().removeAll();
         addPreferencesFromResource(R.xml.main_preferences);
 
-        registerSignInPref();
-        mSignInPreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(Preference preference) {
-                if (!ChromeSigninController.get(getActivity()).isSignedIn()) {
-                    displayAccountPicker();
-                    return true;
-                }
-                return false;
-            }
-        });
+//        registerSignInPref();
+//        mSignInPreference.setOnPreferenceClickListener(new OnPreferenceClickListener() {
+//            @Override
+//            public boolean onPreferenceClick(Preference preference) {
+//                if (!ChromeSigninController.get(getActivity()).isSignedIn()) {
+//                    displayAccountPicker();
+//                    return true;
+//                }
+//                return false;
+//            }
+//        });
 
         Preference documentMode = findPreference(PREF_DOCUMENT_MODE);
         if (FeatureUtilities.isDocumentModeEligible(getActivity())) {

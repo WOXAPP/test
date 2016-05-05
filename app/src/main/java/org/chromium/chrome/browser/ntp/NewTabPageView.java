@@ -103,52 +103,70 @@ public class NewTabPageView extends FrameLayout
      * Manages the view interaction with the rest of the system.
      */
     public interface NewTabPageManager extends MostVisitedItemManager {
-        /** @return Whether the location bar is shown in the NTP. */
+        /**
+         * @return Whether the location bar is shown in the NTP.
+         */
         boolean isLocationBarShownInNTP();
 
-        /** @return Whether voice search is enabled and the microphone should be shown. */
+        /**
+         * @return Whether voice search is enabled and the microphone should be shown.
+         */
         boolean isVoiceSearchEnabled();
 
-        /** @return Whether the document mode opt out promo should be shown. */
+        /**
+         * @return Whether the document mode opt out promo should be shown.
+         */
         boolean shouldShowOptOutPromo();
 
-        /** Called when the document mode opt out promo is shown. */
+        /**
+         * Called when the document mode opt out promo is shown.
+         */
         void optOutPromoShown();
 
-        /** Called when the user clicks "settings" or "ok, got it" on the opt out promo. */
+        /**
+         * Called when the user clicks "settings" or "ok, got it" on the opt out promo.
+         */
         void optOutPromoClicked(boolean settingsClicked);
 
-        /** Opens the bookmarks page in the current tab. */
+        /**
+         * Opens the bookmarks page in the current tab.
+         */
         void navigateToBookmarks();
 
-        /** Opens the recent tabs page in the current tab. */
+        /**
+         * Opens the recent tabs page in the current tab.
+         */
         void navigateToRecentTabs();
 
         /**
          * Animates the search box up into the omnibox and bring up the keyboard.
+         *
          * @param beginVoiceSearch Whether to begin a voice search.
-         * @param pastedText Text to paste in the omnibox after it's been focused. May be null.
+         * @param pastedText       Text to paste in the omnibox after it's been focused. May be null.
          */
         void focusSearchBox(boolean beginVoiceSearch, String pastedText);
 
         /**
          * Gets the list of most visited sites.
-         * @param observer The observer to be notified with the list of sites.
+         *
+         * @param observer   The observer to be notified with the list of sites.
          * @param numResults The maximum number of sites to retrieve.
          */
         void setMostVisitedURLsObserver(MostVisitedURLsObserver observer, int numResults);
 
         /**
          * Gets a cached thumbnail of a URL.
-         * @param url The URL whose thumbnail is being retrieved.
+         *
+         * @param url               The URL whose thumbnail is being retrieved.
          * @param thumbnailCallback The callback to be notified when the thumbnail is available.
          */
         void getURLThumbnail(String url, ThumbnailCallback thumbnailCallback);
 
         /**
          * Gets the favicon image for a given URL.
-         * @param url The URL of the site whose favicon is being requested.
-         * @param size The desired size of the favicon in pixels.
+         *
+         * @param url             The URL of the site whose favicon is being requested.
+         * @param size            The desired size of the favicon in pixels.
          * @param faviconCallback The callback to be notified when the favicon is available.
          */
         void getLocalFaviconImageForURL(
@@ -156,8 +174,9 @@ public class NewTabPageView extends FrameLayout
 
         /**
          * Gets the large icon (e.g. favicon or touch icon) for a given URL.
-         * @param url The URL of the site whose icon is being requested.
-         * @param size The desired size of the icon in pixels.
+         *
+         * @param url      The URL of the site whose icon is being requested.
+         * @param size     The desired size of the icon in pixels.
          * @param callback The callback to be notified when the icon is available.
          */
         void getLargeIconForUrl(String url, int size, LargeIconCallback callback);
@@ -165,22 +184,25 @@ public class NewTabPageView extends FrameLayout
         /**
          * Checks if an icon with the given URL is available. If not,
          * downloads it and stores it as a favicon/large icon for the given {@code pageUrl}.
-         * @param pageUrl The URL of the site whose icon is being requested.
-         * @param iconUrl The URL of the favicon/large icon.
+         *
+         * @param pageUrl     The URL of the site whose icon is being requested.
+         * @param iconUrl     The URL of the favicon/large icon.
          * @param isLargeIcon Whether the {@code iconUrl} represents a large icon or favicon.
-         * @param callback The callback to be notified when the favicon has been checked.
+         * @param callback    The callback to be notified when the favicon has been checked.
          */
         void ensureIconIsAvailable(String pageUrl, String iconUrl, boolean isLargeIcon,
-                IconAvailabilityCallback callback);
+                                   IconAvailabilityCallback callback);
 
         /**
          * Called when the user clicks on the logo.
+         *
          * @param isAnimatedLogoShowing Whether the animated GIF logo is playing.
          */
         void onLogoClicked(boolean isAnimatedLogoShowing);
 
         /**
          * Gets the default search provider's logo and calls logoObserver with the result.
+         *
          * @param logoObserver The callback to notify when the logo is available.
          */
         void getSearchProviderLogo(LogoObserver logoObserver);
@@ -188,6 +210,7 @@ public class NewTabPageView extends FrameLayout
         /**
          * Called when the NTP has completely finished loading (all views will be inflated
          * and any dependent resources will have been loaded).
+         *
          * @param mostVisitedItems The MostVisitedItem shown on the NTP. Used to record metrics.
          */
         void onLoadingComplete(MostVisitedItem[] mostVisitedItems);
@@ -220,14 +243,14 @@ public class NewTabPageView extends FrameLayout
      * Initializes the NTP. This must be called immediately after inflation, before this object is
      * used in any other way.
      *
-     * @param manager NewTabPageManager used to perform various actions when the user interacts
-     *                with the page.
-     * @param isSingleUrlBarMode Whether the NTP is in single URL bar mode.
+     * @param manager               NewTabPageManager used to perform various actions when the user interacts
+     *                              with the page.
+     * @param isSingleUrlBarMode    Whether the NTP is in single URL bar mode.
      * @param searchProviderHasLogo Whether the search provider has a logo.
-     * @param isIconMode Whether to show the icon-based design, as opposed to the thumbnail design.
+     * @param isIconMode            Whether to show the icon-based design, as opposed to the thumbnail design.
      */
     public void initialize(NewTabPageManager manager, boolean isSingleUrlBarMode,
-            boolean searchProviderHasLogo, boolean isIconMode) {
+                           boolean searchProviderHasLogo, boolean isIconMode) {
         mManager = manager;
 
         mScrollView = (NewTabScrollView) findViewById(R.id.ntp_scrollview);
@@ -285,6 +308,11 @@ public class NewTabPageView extends FrameLayout
         });
 
         NewTabPageToolbar toolbar = (NewTabPageToolbar) findViewById(R.id.ntp_toolbar);
+        /**
+         * 隐藏底部书签和最近浏览记录按钮
+         * Modify by: xuhualin on 2016/5/3
+         */
+        toolbar.setVisibility(View.INVISIBLE);
         toolbar.getRecentTabsButton().setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -298,7 +326,7 @@ public class NewTabPageView extends FrameLayout
             }
         });
 
-        initializeSearchBoxScrollHandling();
+//        initializeSearchBoxScrollHandling();
         addOnLayoutChangeListener(this);
         setSearchProviderHasLogo(searchProviderHasLogo);
 
@@ -306,7 +334,11 @@ public class NewTabPageView extends FrameLayout
         mManager.setMostVisitedURLsObserver(this,
                 mMostVisitedDesign.getNumberOfTiles(searchProviderHasLogo));
 
-        if (mManager.shouldShowOptOutPromo()) showOptOutPromo();
+        /**
+         * 隐藏省流量提示页面
+         * Modify by: xuhualin on 2016/5/3
+         */
+//        if (mManager.shouldShowOptOutPromo()) showOptOutPromo();
     }
 
     private int getTabsMovedIllustration() {
@@ -397,7 +429,10 @@ public class NewTabPageView extends FrameLayout
                 int scrollY = mScrollView.getScrollY();
                 int dividerTop = mMostVisitedLayout.getTop() - mContentView.getPaddingTop();
                 if (scrollY > 0 && scrollY < dividerTop) {
-                    mScrollView.smoothScrollTo(0, scrollY < (dividerTop / 2) ? 0 : dividerTop);
+                    /**
+                     * 禁止NewTabScrollView自动滚动
+                     */
+//                    mScrollView.smoothScrollTo(0, scrollY < (dividerTop / 2) ? 0 : dividerTop);
                 }
                 mPendingSnapScroll = false;
             }
@@ -468,6 +503,7 @@ public class NewTabPageView extends FrameLayout
     /**
      * Changes the layout depending on whether the selected search provider (e.g. Google, Bing)
      * has a logo.
+     *
      * @param hasLogo Whether the search provider has a logo.
      */
     public void setSearchProviderHasLogo(boolean hasLogo) {
@@ -497,6 +533,7 @@ public class NewTabPageView extends FrameLayout
 
     /**
      * Updates whether the NewTabPage should animate on URL focus changes.
+     *
      * @param disable Whether to disable the animations.
      */
     void setUrlFocusAnimationsDisabled(boolean disable) {
@@ -558,6 +595,7 @@ public class NewTabPageView extends FrameLayout
     /**
      * Unconditionally sets the percentage the URL is focused during an animation, without updating
      * mUrlFocusChangePercent.
+     *
      * @see #setUrlFocusChangeAnimationPercent
      */
     private void setUrlFocusChangeAnimationPercentInternal(float percent) {
@@ -580,9 +618,9 @@ public class NewTabPageView extends FrameLayout
     /**
      * Get the bounds of the search box in relation to the top level NewTabPage view.
      *
-     * @param originalBounds The bounding region of the search box without external transforms
-     *                       applied.  The delta between this and the transformed bounds determines
-     *                       the amount of scroll applied to this view.
+     * @param originalBounds    The bounding region of the search box without external transforms
+     *                          applied.  The delta between this and the transformed bounds determines
+     *                          the amount of scroll applied to this view.
      * @param transformedBounds The bounding region of the search box including any transforms
      *                          applied by the parent view hierarchy up to the NewTabPage view.
      *                          This more accurately reflects the current drawing location of the
@@ -609,6 +647,7 @@ public class NewTabPageView extends FrameLayout
 
     /**
      * Sets the listener for search box scroll changes.
+     *
      * @param listener The listener to be notified on changes.
      */
     void setSearchBoxScrollListener(OnSearchBoxScrollListener listener) {
@@ -642,7 +681,11 @@ public class NewTabPageView extends FrameLayout
      * enabled.
      */
     void updateVoiceSearchButtonVisibility() {
-        mVoiceSearchButton.setVisibility(mManager.isVoiceSearchEnabled() ? VISIBLE : GONE);
+        /**
+         * 隐藏语音搜索
+         * Modify by: xuhualin on 2016/5/3
+         */
+        mVoiceSearchButton.setVisibility(GONE);
     }
 
     @Override
@@ -673,7 +716,7 @@ public class NewTabPageView extends FrameLayout
 
     /**
      * @see org.chromium.chrome.browser.compositor.layouts.content.
-     *         InvalidationAwareThumbnailProvider#shouldCaptureThumbnail()
+     * InvalidationAwareThumbnailProvider#shouldCaptureThumbnail()
      */
     boolean shouldCaptureThumbnail() {
         if (getWidth() == 0 || getHeight() == 0) return false;
@@ -686,7 +729,7 @@ public class NewTabPageView extends FrameLayout
 
     /**
      * @see org.chromium.chrome.browser.compositor.layouts.content.
-     *         InvalidationAwareThumbnailProvider#captureThumbnail(Canvas)
+     * InvalidationAwareThumbnailProvider#captureThumbnail(Canvas)
      */
     void captureThumbnail(Canvas canvas) {
         mSearchProviderLogoView.endFadeAnimation();
@@ -701,7 +744,7 @@ public class NewTabPageView extends FrameLayout
 
     @Override
     public void onLayoutChange(View v, int left, int top, int right, int bottom,
-            int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                               int oldLeft, int oldTop, int oldRight, int oldBottom) {
         int oldWidth = oldRight - oldLeft;
         int newWidth = right - left;
         if (oldWidth == newWidth) return;
@@ -755,6 +798,12 @@ public class NewTabPageView extends FrameLayout
             mMostVisitedLayout.addView(item.getView());
         }
 
+        /**
+         * Modify by: xuhualin on 2016/5/3
+         */
+        mMostVisitedLayout.removeAllViews();
+
+
         mHasReceivedMostVisitedSites = true;
         updateMostVisitedPlaceholderVisibility();
 
@@ -805,6 +854,10 @@ public class NewTabPageView extends FrameLayout
         mNoSearchLogoSpacer.setVisibility(
                 (mSearchProviderHasLogo || showPlaceholder) ? View.GONE : View.INVISIBLE);
 
+        /**
+         * 隐藏最常浏览页面
+         * Modify by: xuhualin on 2016/5/3
+         */
         if (showPlaceholder) {
             if (mMostVisitedPlaceholder == null) {
                 ViewStub mostVisitedPlaceholderStub = (ViewStub) findViewById(
@@ -812,10 +865,10 @@ public class NewTabPageView extends FrameLayout
                 mMostVisitedPlaceholder = mostVisitedPlaceholderStub.inflate();
             }
             mMostVisitedLayout.setVisibility(GONE);
-            mMostVisitedPlaceholder.setVisibility(VISIBLE);
+            mMostVisitedPlaceholder.setVisibility(GONE);
             return;
         } else if (mMostVisitedPlaceholder != null) {
-            mMostVisitedLayout.setVisibility(VISIBLE);
+            mMostVisitedLayout.setVisibility(GONE);
             mMostVisitedPlaceholder.setVisibility(GONE);
         }
     }
@@ -826,13 +879,20 @@ public class NewTabPageView extends FrameLayout
      */
     private interface MostVisitedDesign {
         int getNumberOfTiles(boolean searchProviderHasLogo);
+
         int getMostVisitedLayoutId();
+
         int getMostVisitedLayoutBleed();
+
         void initMostVisitedLayout(ViewGroup mostVisitedLayout, boolean searchProviderHasLogo);
+
         void setSearchProviderHasLogo(View mostVisitedLayout, boolean hasLogo);
+
         View createMostVisitedItemView(LayoutInflater inflater, String url, String title,
-                String displayTitle, MostVisitedItem item, boolean isInitialLoad);
+                                       String displayTitle, MostVisitedItem item, boolean isInitialLoad);
+
         void onIconUpdated(String url);
+
         boolean preferLargeIcons();
     }
 
@@ -877,16 +937,17 @@ public class NewTabPageView extends FrameLayout
 
         @Override
         public void initMostVisitedLayout(ViewGroup mostVisitedLayout,
-                boolean searchProviderHasLogo) {
+                                          boolean searchProviderHasLogo) {
         }
 
         @Override
-        public void setSearchProviderHasLogo(View mostVisitedLayout, boolean hasLogo) {}
+        public void setSearchProviderHasLogo(View mostVisitedLayout, boolean hasLogo) {
+        }
 
         @Override
         public View createMostVisitedItemView(LayoutInflater inflater, final String url,
-                String title, String displayTitle, final MostVisitedItem item,
-                final boolean isInitialLoad) {
+                                              String title, String displayTitle, final MostVisitedItem item,
+                                              final boolean isInitialLoad) {
             final MostVisitedItemView view = (MostVisitedItemView) inflater.inflate(
                     R.layout.most_visited_item, mMostVisitedLayout, false);
             view.init(displayTitle);
@@ -894,7 +955,7 @@ public class NewTabPageView extends FrameLayout
             ThumbnailCallback thumbnailCallback = new ThumbnailCallback() {
                 @Override
                 public void onMostVisitedURLsThumbnailAvailable(Bitmap thumbnail,
-                        boolean isLocalThumbnail) {
+                                                                boolean isLocalThumbnail) {
                     view.setThumbnail(thumbnail);
                     if (thumbnail == null) {
                         item.setTileType(MostVisitedTileType.THUMBNAIL_DEFAULT);
@@ -1006,7 +1067,7 @@ public class NewTabPageView extends FrameLayout
 
         @Override
         public void initMostVisitedLayout(ViewGroup mostVisitedLayout,
-                boolean searchProviderHasLogo) {
+                                          boolean searchProviderHasLogo) {
             ((IconMostVisitedLayout) mostVisitedLayout).setMaxRows(
                     searchProviderHasLogo ? MAX_ROWS : MAX_ROWS_NO_LOGO);
         }
@@ -1056,8 +1117,8 @@ public class NewTabPageView extends FrameLayout
 
         @Override
         public View createMostVisitedItemView(LayoutInflater inflater, final String url,
-                String title, String displayTitle, MostVisitedItem item,
-                final boolean isInitialLoad) {
+                                              String title, String displayTitle, MostVisitedItem item,
+                                              final boolean isInitialLoad) {
             final IconMostVisitedItemView view = (IconMostVisitedItemView) inflater.inflate(
                     R.layout.icon_most_visited_item, mMostVisitedLayout, false);
             view.setTitle(displayTitle);

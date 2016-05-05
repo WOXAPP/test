@@ -20,6 +20,8 @@ import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnPreDrawListener;
 import android.view.WindowManager;
 
+import com.umeng.analytics.MobclickAgent;
+
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.TraceEvent;
 import org.chromium.base.library_loader.LoaderErrors;
@@ -94,19 +96,19 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
         assert firstDrawView != null;
         ViewTreeObserver.OnPreDrawListener firstDrawListener =
                 new ViewTreeObserver.OnPreDrawListener() {
-            @Override
-            public boolean onPreDraw() {
-                firstDrawView.getViewTreeObserver().removeOnPreDrawListener(this);
-                onFirstDrawComplete();
-                return true;
-            }
-        };
+                    @Override
+                    public boolean onPreDraw() {
+                        firstDrawView.getViewTreeObserver().removeOnPreDrawListener(this);
+                        onFirstDrawComplete();
+                        return true;
+                    }
+                };
         firstDrawView.getViewTreeObserver().addOnPreDrawListener(firstDrawListener);
     }
 
     /**
      * @return The primary view that must have completed at least one draw before initializing
-     *         native.  This must be non-null.
+     * native.  This must be non-null.
      */
     protected View getViewToBeDrawnBeforeInitializingNative() {
         return findViewById(android.R.id.content);
@@ -119,16 +121,18 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
         if (intent != null && Intent.ACTION_VIEW.equals(intent.getAction())) {
             final String url = intent.getDataString();
             WarmupManager.getInstance()
-                .maybePreconnectUrlAndSubResources(Profile.getLastUsedProfile(), url);
+                    .maybePreconnectUrlAndSubResources(Profile.getLastUsedProfile(), url);
         }
         TraceEvent.end("maybePreconnect");
     }
 
     @Override
-    public void initializeCompositor() { }
+    public void initializeCompositor() {
+    }
 
     @Override
-    public void initializeState() { }
+    public void initializeState() {
+    }
 
     @Override
     public void finishNativeInitialization() {
@@ -138,7 +142,7 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
                 new View.OnLayoutChangeListener() {
                     @Override
                     public void onLayoutChange(View v, int left, int top, int right, int bottom,
-                            int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                                               int oldLeft, int oldTop, int oldRight, int oldBottom) {
                         checkOrientation();
                     }
                 });
@@ -151,7 +155,8 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
      * startup path here.  This method will be called automatically and should not be called
      * directly by subclasses.  Overriding methods should call super.onDeferredStartup().
      */
-    protected void onDeferredStartup() { }
+    protected void onDeferredStartup() {
+    }
 
     @Override
     public void onStartupFailure() {
@@ -229,6 +234,8 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
         super.onResume();
         mNativeInitializationController.onResume();
         if (mLaunchBehindWorkaround != null) mLaunchBehindWorkaround.onResume();
+
+        MobclickAgent.onResume(this);
     }
 
     @Override
@@ -236,6 +243,8 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
         mNativeInitializationController.onPause();
         super.onPause();
         if (mLaunchBehindWorkaround != null) mLaunchBehindWorkaround.onPause();
+
+        MobclickAgent.onPause(this);
     }
 
     @Override
@@ -263,7 +272,8 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
     }
 
     @Override
-    public void onStartWithNative() { }
+    public void onStartWithNative() {
+    }
 
     @Override
     public void onResumeWithNative() {
@@ -271,10 +281,12 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
     }
 
     @Override
-    public void onPauseWithNative() { }
+    public void onPauseWithNative() {
+    }
 
     @Override
-    public void onStopWithNative() { }
+    public void onStopWithNative() {
+    }
 
     @Override
     public boolean isActivityDestroyed() {
@@ -292,7 +304,8 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
     }
 
     @Override
-    public void onNewIntentWithNative(Intent intent) { }
+    public void onNewIntentWithNative(Intent intent) {
+    }
 
     @Override
     public boolean onActivityResultWithNative(int requestCode, int resultCode, Intent data) {
@@ -333,6 +346,7 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
     /**
      * Called when the orientation of the device changes.  The orientation is checked/detected on
      * root view layouts.
+     *
      * @param orientation One of {@link Surface#ROTATION_0} (no rotation),
      *                    {@link Surface#ROTATION_90}, {@link Surface#ROTATION_180}, or
      *                    {@link Surface#ROTATION_270}.
@@ -392,7 +406,7 @@ public abstract class AsyncInitializationActivity extends AppCompatActivity impl
 
     /**
      * Lollipop (pre-MR1) makeTaskLaunchBehind() workaround.
-     *
+     * <p/>
      * Our activity's surface is destroyed at the end of the new activity animation
      * when ActivityOptions.makeTaskLaunchBehind() is used, which causes a crash.
      * Making everything invisible when paused prevents the crash, since view changes

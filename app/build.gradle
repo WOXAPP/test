@@ -5,11 +5,11 @@ android {
     buildToolsVersion "23.0.1"
     enforceUniquePackageName false
     defaultConfig {
-        applicationId "com.fumujidi.chromiumforandorid2"
+        applicationId "com.fumujidi.chromiumforandroid"
         minSdkVersion 14
         targetSdkVersion 23
-        versionCode 1
-        versionName "1.0"
+        versionCode 10
+        versionName "V2.1"
 
         multiDexEnabled true
     }
@@ -39,6 +39,7 @@ dependencies {
     compile 'com.android.support:multidex:1.0.0'
     compile 'com.google.android.gms:play-services-cast:8.1.0'
     compile 'com.google.android.gms:play-services-gcm:8.1.0'
+    compile 'com.umeng.analytics:analytics:latest.integration'
     compile project(':chrome_res')
     compile project(':ui_res')
     compile project(':content_res')

@@ -25,6 +25,9 @@ by a child template that "extends" this file.
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
 
     <!--
       Enable Bluetooth permission via uses-permission in tip of tree builds
@@ -1104,6 +1107,8 @@ by a child template that "extends" this file.
             android:name="org.chromium.content.browser.REMOTE_MEDIA_PLAYERS"
             android:value="org.chromium.chrome.browser.media.remote.DefaultMediaRouteController"/>
 
+        <meta-data android:value="572aad8be0f55ad376000eb3" android:name="UMENG_APPKEY"></meta-data>
+        <meta-data android:value="Official" android:name="UMENG_CHANNEL"/>
 
     </application>
 </manifest>

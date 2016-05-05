@@ -189,7 +189,7 @@ public class ExternalAuthUtils {
                     errorHandler.handleError(context, resultCode);
                 }
             };
-            ThreadUtils.runOnUiThread(errorHandlerTask);
+//            ThreadUtils.runOnUiThread(errorHandlerTask);
         }
         return false;
     }

